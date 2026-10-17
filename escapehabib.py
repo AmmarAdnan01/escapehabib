@@ -1,5 +1,8 @@
 import curses 
+import os
 
+if os.name == "nt":
+    os.system("mode con: cols=100 lines=35")
 
 def load_instruction_screen(newwin):
     attr = curses.color_pair(1) | curses.A_BOLD
