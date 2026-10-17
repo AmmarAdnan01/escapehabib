@@ -2,6 +2,15 @@ import curses
 import os
 
 
+#123
+
+def init_color():
+    curses.start_color()
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLUE)
+    curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_GREEN)
+
 def center_text(newwin, y, text, attr):
     height, width = newwin.getmaxyx()
 
@@ -83,11 +92,7 @@ def load_home_screen(newwin):
 
 def main(stdscr):
     curses.curs_set(0)
-    curses.start_color()
-
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLUE)
-    curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_GREEN)
+    init_color()
 
     stdscr.clear()
     stdscr.keypad(True)
