@@ -65,6 +65,8 @@ def main(stdscr):
             newwin.clear()
             newwin.addstr(11, 32, "4", attr2)
             newwin.border()
+        elif key == ord('5'):
+            exit()
 
 
 
