@@ -2,8 +2,6 @@ import curses
 import os
 from datetime import datetime
 
-
-
 MAP_LAYOUT_G_FLOOR = [
     "#######################################################################################################################",
     "#    [Ecology W121] #   [Dig.Sys &  #                                                                                 #",
@@ -37,35 +35,29 @@ def init_color():
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLUE)
     curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_GREEN)
 
-
+    #color initializing for map rendering specficially
     wall_color = 174 
     wall_background = 236
     path_color = 108
     curses.init_pair(4, wall_color, wall_background)
     curses.init_pair(5, path_color, curses.COLOR_BLACK)
-    curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Player / header
-    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Campus labels
-    curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_BLACK)  # Empty Space
-
+    curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK) 
+    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_BLACK) 
 
 def center_text(newwin, y, text, attr):
     height, width = newwin.getmaxyx()
-
     if 0 < y < height - 1 and len(text) < width - 2:
         x = (width - len(text)) // 2
         newwin.addstr(y, x, text, attr)
 
-def load_character_screen(newwin):
-    pass
-
+#actual game functions
 def game(newwin):
     curses.curs_set(0)
     newwin.keypad(True)
     init_color()
 
-
-    #spawn location of player
-    
+    #spawn location of player    
     player_y = 5
     player_x = 8
 
@@ -87,6 +79,7 @@ def game(newwin):
         stamp = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
         newwin.addnstr(0, max(1, cols - len(stamp) - 2), stamp, len(stamp), curses.color_pair(6))
 
+        #map rendering logics
         for y in range(len(MAP_LAYOUT_G_FLOOR)):
             row = MAP_LAYOUT_G_FLOOR[y]
             for x in range(len(row)):
@@ -96,16 +89,39 @@ def game(newwin):
                 elif char == " " and x % 2 == 0:
                     newwin.addch(y + 1, x + 1, ".", curses.color_pair(5))
                 elif char == " " and x % 2 != 0:
-                    newwin.addch(y + 1, x + 1, char, curses.color_pair(6))
+                    newwin.addch(y + 1, x + 1, char, curses.color_pair(5))
                 elif char == "|":
-                    newwin.addch(y + 1, x + 1, char, curses.color_pair(7) | curses.A_BOLD)
+                    newwin.addch(y + 1, x + 1, char, curses.color_pair(5) | curses.A_BOLD)
                 else:
-                    newwin.addch(y + 1, x + 1, char, curses.color_pair(8))
+                    newwin.addch(y + 1, x + 1, char, curses.color_pair(7))
 
         #actual spawning player
         newwin.addch(player_y + 1, player_x + 1, "@", curses.color_pair(6) | curses.A_BOLD)
         newwin.refresh()
 
+        #waiting here for getting an action key
+        key = newwin.getch()
+
+        #breaking if press q or Q
+        if key in (ord("q"), ord("Q")):
+            break
+
+        #player movement logic on pressing arrow keys
+        new_y, new_x = player_y, player_x
+        if key == curses.KEY_UP:
+            new_y -= 1
+        elif key == curses.KEY_DOWN:
+            new_y += 1
+        elif key == curses.KEY_LEFT:
+            new_x -= 1
+        elif key == curses.KEY_RIGHT:
+            new_x += 1
+
+        #if not colliding with walls or getting out of map, player coordinates changes with the new ones
+        if 0 <= new_y < len(MAP_LAYOUT_G_FLOOR) and 0 <= new_x < len(MAP_LAYOUT_G_FLOOR[new_y]):
+            if MAP_LAYOUT_G_FLOOR[new_y][new_x] not in ("#"):
+                player_y = new_y
+                player_x = new_x
 
 def load_instruction_screen(newwin):
     attr = curses.color_pair(1) | curses.A_BOLD
@@ -114,27 +130,17 @@ def load_instruction_screen(newwin):
     while True:
         newwin.clear()
         height, width = newwin.getmaxyx()
-
         newwin.border()
 
         center_text(newwin, height // 5, 'INSTRUCTIONS', attr)
-
-        center_text(newwin, height // 2 - 2,
-                    'Your goal is to avoid teachers and escape Habib', attr2)
-
-        center_text(newwin, height // 2 - 1,
-                    'from either Gate 2 or Gate 4.', attr2)
-
-        center_text(newwin, height - 4,
-                    'Press 5 to go back to home screen.', attr2)
+        center_text(newwin, height // 2 - 2, 'Your goal is to avoid teachers and escape Habib', attr2)
+        center_text(newwin, height // 2 - 1, 'from either Gate 2 or Gate 4.', attr2)
+        center_text(newwin, height - 4, 'Press 5 to go back to home screen.', attr2)
 
         newwin.refresh()
-
         key = newwin.getch()
-
         if key == ord('5'):
             return
-
 
 def load_home_screen(newwin):
     newwin.clear()
@@ -148,34 +154,22 @@ def load_home_screen(newwin):
     newwin.border()
     newwin.keypad(True)
 
-    center_text(newwin, height // 5,
-                'ESCAPE HABIB: BUNK', attr)
-
-    center_text(newwin, height // 5 + 1,
-                'A CLASS', attr)
+    center_text(newwin, height // 5, 'ESCAPE HABIB: BUNK', attr)
+    center_text(newwin, height // 5 + 1, 'A CLASS', attr)
 
     menu_start = height // 2 - 3
 
-    center_text(newwin, menu_start,
-                '1. START GAME', attr2)
-
-    center_text(newwin, menu_start + 1,
-                '2. CHANGE CHARACTER', attr2)
-
-    center_text(newwin, menu_start + 2,
-                '3. INSTRUCTIONS', attr2)
-
-    center_text(newwin, menu_start + 3,
-                '4. HIGH SCORE', attr2)
-
-    center_text(newwin, menu_start + 4,
-                '5. QUIT', attr2)
-
-    center_text(newwin, height - 4,
-                'POWERED BY TMZ (The Mighty Zingers)', attr3)
+    center_text(newwin, menu_start, '1. START GAME', attr2)
+    center_text(newwin, menu_start + 1, '2. CHANGE CHARACTER', attr2)
+    center_text(newwin, menu_start + 2, '3. INSTRUCTIONS', attr2)
+    center_text(newwin, menu_start + 3, '4. HIGH SCORE', attr2)
+    center_text(newwin, menu_start + 4, '5. QUIT', attr2)
+    center_text(newwin, height - 4, 'POWERED BY TMZ (The Mighty Zingers)', attr3)
 
     newwin.refresh()
 
+def load_character_screen(newwin):
+    pass
 
 def main(stdscr):
     curses.curs_set(0)
@@ -189,7 +183,6 @@ def main(stdscr):
     while True:
         load_home_screen(newwin)
         key = newwin.getch()
-        init_color()
 
         if key == ord('1'):
             game(newwin)
