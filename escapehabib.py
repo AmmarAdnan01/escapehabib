@@ -139,7 +139,7 @@ def main(stdscr):
         init_color()
 
         if key == ord('1'):
-            pass
+            game(newwin)
         elif key == ord('2'):
             load_character_screen(newwin)
         elif key == ord('3'):
