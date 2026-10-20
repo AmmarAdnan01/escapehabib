@@ -1,9 +1,6 @@
 import curses
 import os
 
-
-#123
-
 def init_color():
     curses.start_color()
     curses.use_default_colors()
@@ -11,12 +8,14 @@ def init_color():
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLUE)
     curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_GREEN)
 
+
 def center_text(newwin, y, text, attr):
     height, width = newwin.getmaxyx()
 
     if 0 < y < height - 1 and len(text) < width - 2:
         x = (width - len(text)) // 2
         newwin.addstr(y, x, text, attr)
+
 def load_character_screen(newwin):
     pass
 
@@ -93,53 +92,36 @@ def load_home_screen(newwin):
 def main(stdscr):
     curses.curs_set(0)
     init_color()
-
     stdscr.clear()
     stdscr.keypad(True)
-
-    # Use the ENTIRE terminal screen
     newwin = stdscr
 
     attr2 = curses.color_pair(2) | curses.A_BOLD
 
     while True:
         load_home_screen(newwin)
-
         key = newwin.getch()
+        init_color()
 
         if key == ord('1'):
-            newwin.clear()
-            height, width = newwin.getmaxyx()
-            newwin.border()
-
-            center_text(newwin, height // 2,
-                        "START GAME", attr2)
-
-            newwin.refresh()
-            newwin.getch()
-
+            pass
         elif key == ord('2'):
             load_character_screen(newwin)
-
         elif key == ord('3'):
             load_instruction_screen(newwin)
-
         elif key == ord('4'):
             newwin.clear()
             height, width = newwin.getmaxyx()
             newwin.border()
-
             center_text(newwin, height // 2,
                         "HIGH SCORE", attr2)
-            newwin.refresh()
-
         elif key == ord('5'):
             break
 
 
-
-# Attempt to enlarge the Windows console
 if os.name == "nt":
     os.system("mode con: cols=180 lines=55")
-    
-curses.wrapper(main)
+
+
+if __name__ == "__main__":
+    curses.wrapper(main)
