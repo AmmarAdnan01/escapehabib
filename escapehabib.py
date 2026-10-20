@@ -1,5 +1,6 @@
 import curses
 import os
+from datetime import datetime
 
 
 
@@ -37,6 +38,16 @@ def init_color():
     curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_GREEN)
 
 
+    wall_color = 174 
+    wall_background = 236
+    path_color = 108
+    curses.init_pair(4, wall_color, wall_background)
+    curses.init_pair(5, path_color, curses.COLOR_BLACK)
+    curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Player / header
+    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)  # Campus labels
+    curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_BLACK)  # Empty Space
+
+
 def center_text(newwin, y, text, attr):
     height, width = newwin.getmaxyx()
 
@@ -50,8 +61,50 @@ def load_character_screen(newwin):
 def game(newwin):
     curses.curs_set(0)
     newwin.keypad(True)
-    curses.start_color()
-    curses.use_default_colors()
+    init_color()
+
+
+    #spawn location of player
+    
+    player_y = 5
+    player_x = 8
+
+    #map max_width
+    map_width = 0
+    for i in MAP_LAYOUT_G_FLOOR:
+        if len(i) > map_width:
+            map_width = len(i)
+
+    while True:
+        newwin.erase()
+
+        #current terminal max height and width
+        rows, cols = newwin.getmaxyx()
+
+        newwin.addstr(0, 1, "Tile: you", curses.color_pair(3))
+
+        #time for retro feel
+        stamp = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        newwin.addnstr(0, max(1, cols - len(stamp) - 2), stamp, len(stamp), curses.color_pair(6))
+
+        for y in range(len(MAP_LAYOUT_G_FLOOR)):
+            row = MAP_LAYOUT_G_FLOOR[y]
+            for x in range(len(row)):
+                char = row[x]
+                if char == "#":
+                    newwin.addch(y + 1, x + 1, "#", curses.color_pair(4) | curses.A_BOLD)
+                elif char == " " and x % 2 == 0:
+                    newwin.addch(y + 1, x + 1, ".", curses.color_pair(5))
+                elif char == " " and x % 2 != 0:
+                    newwin.addch(y + 1, x + 1, char, curses.color_pair(6))
+                elif char == "|":
+                    newwin.addch(y + 1, x + 1, char, curses.color_pair(7) | curses.A_BOLD)
+                else:
+                    newwin.addch(y + 1, x + 1, char, curses.color_pair(8))
+
+        #actual spawning player
+        newwin.addch(player_y + 1, player_x + 1, "@", curses.color_pair(6) | curses.A_BOLD)
+        newwin.refresh()
 
 
 def load_instruction_screen(newwin):
