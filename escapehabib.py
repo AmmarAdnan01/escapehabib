@@ -1,7 +1,8 @@
 import curses
 import os
 from datetime import datetime
-
+characters = ['😹','😎','🥶']
+selected = 0
 MAP_LAYOUT_G_FLOOR = [
     "#######################################################################################################################",
     "#    [Ecology W121] #   [Dig.Sys &  #                                                                                 #",
@@ -45,11 +46,12 @@ def init_color():
     curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_BLACK) 
 
-def center_text(newwin, y, text, attr):
+def center_text_horizontally(newwin, y, text, attr):
     height, width = newwin.getmaxyx()
     if 0 < y < height - 1 and len(text) < width - 2:
         x = (width - len(text)) // 2
         newwin.addstr(y, x, text, attr)
+
 
 #actual game functions
 def game(newwin):
@@ -73,12 +75,6 @@ def game(newwin):
         #current terminal max height and width
         rows, cols = newwin.getmaxyx()
 
-        newwin.addstr(0, 1, "Tile: you", curses.color_pair(3))
-
-        #time for retro feel
-        stamp = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        newwin.addnstr(0, max(1, cols - len(stamp) - 2), stamp, len(stamp), curses.color_pair(6))
-
         #map rendering logics
         for y in range(len(MAP_LAYOUT_G_FLOOR)):
             row = MAP_LAYOUT_G_FLOOR[y]
@@ -96,7 +92,7 @@ def game(newwin):
                     newwin.addch(y + 1, x + 1, char, curses.color_pair(7))
 
         #actual spawning player
-        newwin.addch(player_y + 1, player_x + 1, "@", curses.color_pair(6) | curses.A_BOLD)
+        newwin.addch(player_y + 1, player_x + 1, characters[selected], curses.color_pair(6) | curses.A_BOLD)
         newwin.refresh()
 
         #waiting here for getting an action key
@@ -132,10 +128,10 @@ def load_instruction_screen(newwin):
         height, width = newwin.getmaxyx()
         newwin.border()
 
-        center_text(newwin, height // 5, 'INSTRUCTIONS', attr)
-        center_text(newwin, height // 2 - 2, 'Your goal is to avoid teachers and escape Habib', attr2)
-        center_text(newwin, height // 2 - 1, 'from either Gate 2 or Gate 4.', attr2)
-        center_text(newwin, height - 4, 'Press 5 to go back to home screen.', attr2)
+        center_text_horizontally(newwin, height // 5, 'INSTRUCTIONS', attr)
+        center_text_horizontally(newwin, height // 2 - 2, 'Your goal is to avoid teachers and escape Habib', attr2)
+        center_text_horizontally(newwin, height // 2 - 1, 'from either Gate 2 or Gate 4.', attr2)
+        center_text_horizontally(newwin, height - 4, 'Press 5 to go back to home screen.', attr2)
 
         newwin.refresh()
         key = newwin.getch()
@@ -154,22 +150,59 @@ def load_home_screen(newwin):
     newwin.border()
     newwin.keypad(True)
 
-    center_text(newwin, height // 5, 'ESCAPE HABIB: BUNK', attr)
-    center_text(newwin, height // 5 + 1, 'A CLASS', attr)
+    center_text_horizontally(newwin, height // 5, 'ESCAPE HABIB: BUNK', attr)
+    center_text_horizontally(newwin, height // 5 + 1, 'A CLASS', attr)
 
     menu_start = height // 2 - 3
 
-    center_text(newwin, menu_start, '1. START GAME', attr2)
-    center_text(newwin, menu_start + 1, '2. CHANGE CHARACTER', attr2)
-    center_text(newwin, menu_start + 2, '3. INSTRUCTIONS', attr2)
-    center_text(newwin, menu_start + 3, '4. HIGH SCORE', attr2)
-    center_text(newwin, menu_start + 4, '5. QUIT', attr2)
-    center_text(newwin, height - 4, 'POWERED BY TMZ (The Mighty Zingers)', attr3)
+    center_text_horizontally(newwin, menu_start, '1. START GAME', attr2)
+    center_text_horizontally(newwin, menu_start + 1, '2. CHANGE CHARACTER', attr2)
+    center_text_horizontally(newwin, menu_start + 2, '3. INSTRUCTIONS', attr2)
+    center_text_horizontally(newwin, menu_start + 3, '4. HIGH SCORE', attr2)
+    center_text_horizontally(newwin, menu_start + 4, '5. QUIT', attr2)
+    center_text_horizontally(newwin, height - 4, 'POWERED BY TMZ (The Mighty Zingers)', attr3)
 
     newwin.refresh()
 
 def load_character_screen(newwin):
-    pass
+    global selected
+    originallyselected = selected
+    attr2 = curses.color_pair(2) | curses.A_BOLD
+
+    while True:
+        newwin.clear()
+        height, width = newwin.getmaxyx()
+        if selected == 0:
+            center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
+            center_text_horizontally(newwin, height // 2, "(1. Ammar "+characters[0]+")   2. Hasnain "+characters[1]+"   3. Shaheer "+characters[2], attr2)
+            center_text_horizontally(newwin, height - 3, "Press 1, 2 or 3 to select Character, then Press Enter to save. Press 5 to go back", attr2)
+        elif selected == 1:
+            center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
+            center_text_horizontally(newwin, height // 2, "1. Ammar "+characters[0]+"   (2. Hasnain "+characters[1]+")   3. Shaheer "+characters[2], attr2)
+            center_text_horizontally(newwin, height - 3, "Press 1, 2 or 3 to select Character, then Press Enter to save. Press 5 to go back", attr2)
+        elif selected == 2:
+            center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
+            center_text_horizontally(newwin, height // 2, "1. Ammar "+characters[0]+"   2. Hasnain "+characters[1]+"   (3. Shaheer "+characters[2]+")", attr2)
+            center_text_horizontally(newwin, height - 3, "Press 1, 2 or 3 to select Character, then Press Enter to save. Press 5 to go back", attr2)
+        newwin.refresh()
+        key = newwin.getch()
+        if key == ord("1"):
+            selected = 0
+        elif key == ord("2"):
+            selected = 1
+            newwin.refresh()
+        elif key == ord("3"):
+            selected = 2
+        elif key in (curses.KEY_ENTER, 10, 13):
+            return
+
+            
+        
+        if key == ord("5"):
+            selected = originallyselected
+            return
+    
+    
 
 def main(stdscr):
     curses.curs_set(0)
@@ -194,7 +227,7 @@ def main(stdscr):
             newwin.clear()
             height, width = newwin.getmaxyx()
             newwin.border()
-            center_text(newwin, height // 2,
+            center_text_horizontally(newwin, height // 2,
                         "HIGH SCORE", attr2)
         elif key == ord('5'):
             break
