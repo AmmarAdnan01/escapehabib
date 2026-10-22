@@ -1,8 +1,12 @@
 import curses
 import os
 from datetime import datetime
-characters = ['😹','😎','🥶']
-selected = 0
+characters = {
+    "hasnain":"😎",
+    "ammar":"😹",   
+    "shaheer":"🥶"
+}
+selected = "ammar"
 MAP_LAYOUT_G_FLOOR = [
     "#######################################################################################################################",
     "#    [Ecology W121] #   [Dig.Sys &  #                                                                                 #",
@@ -172,27 +176,27 @@ def load_character_screen(newwin):
     while True:
         newwin.clear()
         height, width = newwin.getmaxyx()
-        if selected == 0:
+        if selected == "ammar":
             center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
-            center_text_horizontally(newwin, height // 2, "(1. Ammar "+characters[0]+")   2. Hasnain "+characters[1]+"   3. Shaheer "+characters[2], attr2)
+            center_text_horizontally(newwin, height // 2, "(1. Ammar "+characters["ammar"]+")   2. Hasnain "+characters["hasnain"]+"   3. Shaheer "+characters["shaheer"], attr2)
             center_text_horizontally(newwin, height - 3, "Press 1, 2 or 3 to select Character, then Press Enter to save. Press 5 to go back", attr2)
-        elif selected == 1:
+        elif selected == "hasnain":
             center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
-            center_text_horizontally(newwin, height // 2, "1. Ammar "+characters[0]+"   (2. Hasnain "+characters[1]+")   3. Shaheer "+characters[2], attr2)
+            center_text_horizontally(newwin, height // 2, "1. Ammar "+characters["ammar"]+"   (2. Hasnain "+characters["hasnain"]+")   3. Shaheer "+characters["shaheer"], attr2)
             center_text_horizontally(newwin, height - 3, "Press 1, 2 or 3 to select Character, then Press Enter to save. Press 5 to go back", attr2)
-        elif selected == 2:
+        elif selected == "shaheer":
             center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
-            center_text_horizontally(newwin, height // 2, "1. Ammar "+characters[0]+"   2. Hasnain "+characters[1]+"   (3. Shaheer "+characters[2]+")", attr2)
+            center_text_horizontally(newwin, height // 2, "1. Ammar "+characters["ammar"]+"   2. Hasnain "+characters["hasnain"]+"   (3. Shaheer "+characters["shaheer"]+")", attr2)
             center_text_horizontally(newwin, height - 3, "Press 1, 2 or 3 to select Character, then Press Enter to save. Press 5 to go back", attr2)
         newwin.refresh()
         key = newwin.getch()
         if key == ord("1"):
-            selected = 0
+            selected = "ammar"
         elif key == ord("2"):
-            selected = 1
+            selected = "hasnain"
             newwin.refresh()
         elif key == ord("3"):
-            selected = 2
+            selected = "shaheer"
         elif key in (curses.KEY_ENTER, 10, 13):
             return
 
