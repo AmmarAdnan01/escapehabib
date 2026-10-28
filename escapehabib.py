@@ -1,6 +1,31 @@
 import curses
 import os
-from datetime import datetime
+import time
+MAP_GAME_OVER = [
+    "#######################################################################################################################",
+    "#                                                                                                                     #",
+    "#                                               E S C A P E   H A B I B                                               #",
+    "#                                                                                                                     #",
+    "#                   --------------------------------------------------------------------------------                  #",
+    "#                                                                                                                     #",
+    "#                       ####      ##     #    #   ######         ####    #    #   ######   #####                      #",
+    "#                      #         #  #    ##  ##   #             #    #   #    #   #        #    #                     #",
+    "#                      #  ###   #    #   # ## #   #             #    #   #    #   #        #    #                     #",
+    "#                      #    #   ######   #    #   #####         #    #   #    #   #####    #####                      #",
+    "#                      #    #   #    #   #    #   #             #    #    #  #    #        # #                        #",
+    "#                      #    #   #    #   #    #   #             #    #    #  #    #        #  #                       #",
+    "#                       ####    #    #   #    #   ######         ####      ##     ######   #   #                      #",
+    "#                                                                                                                     #",
+    "#                   --------------------------------------------------------------------------------                  #",
+    "#                                                                                                                     #",
+    "#                                      YOU WERE CAUGHT BEFORE REACHING THE EXIT!                                      #",
+    "#                                                                                                                     #",
+    "#                                       [R] RESTART                     [Q] QUIT                                      #",
+    "#                                                                                                                     #",
+    "#                                                BETTER LUCK NEXT TIME                                                #",
+    "#                                                                                                                     #",
+    "#######################################################################################################################",
+]
 characters = {
     "hasnain":"😎",
     "ammar":"😹",   
@@ -32,7 +57,17 @@ MAP_LAYOUT_G_FLOOR = [
     "  #                                                                                                                   #",
     " ######################################################################################################################",
 ]
-
+C109_LOOP = [
+    [39, 7], [40, 7], [41, 7], [42, 7],
+    [43, 7], [44, 7], [45, 7], [46, 7],
+    [47, 7], [48, 7], [49, 7],
+    [49, 8], [49, 9], [49, 10], [49, 11],
+    [48, 11], [47, 11], [46, 11],
+    [45, 11], [44, 11], [43, 11],
+    [42, 11], [41, 11], [40, 11],
+    [39, 11], [39, 10], [39, 9], [39, 8]
+]
+playercoords = []
 def init_color():
     curses.start_color()
     curses.use_default_colors()
@@ -58,11 +93,11 @@ def center_text_horizontally(newwin, y, text, attr):
 
 
 #actual game functions
-def game(newwin):
+def game(newwin, retries):
     curses.curs_set(0)
     newwin.keypad(True)
     init_color()
-
+    tickrate = 28
     #spawn location of player    
     player_y = 5
     player_x = 8
@@ -72,7 +107,7 @@ def game(newwin):
     for i in MAP_LAYOUT_G_FLOOR:
         if len(i) > map_width:
             map_width = len(i)
-
+    i = 0
     while True:
         newwin.erase()
 
@@ -97,11 +132,14 @@ def game(newwin):
 
         #actual spawning player
         newwin.addch(player_y + 1, player_x + 1, characters[selected], curses.color_pair(6) | curses.A_BOLD)
+        newwin.addch(C109_LOOP[i][1] + 1, C109_LOOP[i][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         newwin.refresh()
+        newwin.timeout(500)
 
         #waiting here for getting an action key
         key = newwin.getch()
 
+    
         #breaking if press q or Q
         if key in (ord("q"), ord("Q")):
             break
@@ -122,6 +160,20 @@ def game(newwin):
             if MAP_LAYOUT_G_FLOOR[new_y][new_x] not in ("#"):
                 player_y = new_y
                 player_x = new_x
+                if player_x == C109_LOOP[i][1] and player_y == C109_LOOP[i][0]:
+                    if retries < 3:
+                        game(newwin, retries + 1)
+                    else: 
+
+                        for i in range(len(MAP_GAME_OVER)):
+                            newwin.addch(i + 1, 1, MAP_GAME_OVER[i], curses.color_pair(4) | curses.A_BOLD)
+                        newwin.timeout(5000)
+                        break
+
+        
+        i = i + 1
+        if i == tickrate:
+            i = 0
 
 def load_instruction_screen(newwin):
     attr = curses.color_pair(1) | curses.A_BOLD
@@ -158,7 +210,6 @@ def load_home_screen(newwin):
     center_text_horizontally(newwin, height // 5 + 1, 'A CLASS', attr)
 
     menu_start = height // 2 - 3
-
     center_text_horizontally(newwin, menu_start, '1. START GAME', attr2)
     center_text_horizontally(newwin, menu_start + 1, '2. CHANGE CHARACTER', attr2)
     center_text_horizontally(newwin, menu_start + 2, '3. INSTRUCTIONS', attr2)
@@ -222,7 +273,7 @@ def main(stdscr):
         key = newwin.getch()
 
         if key == ord('1'):
-            game(newwin)
+            game(newwin, 0)
         elif key == ord('2'):
             load_character_screen(newwin)
         elif key == ord('3'):
@@ -235,6 +286,7 @@ def main(stdscr):
                         "HIGH SCORE", attr2)
         elif key == ord('5'):
             break
+
 
 
 if os.name == "nt":
