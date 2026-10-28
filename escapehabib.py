@@ -1,6 +1,9 @@
 import curses
 import os
 import time
+
+if os.name == "nt":
+    os.system("mode con: cols=180 lines=55")
 MAP_GAME_OVER = [
     "#######################################################################################################################",
     "#                                                                                                                     #",
@@ -27,9 +30,9 @@ MAP_GAME_OVER = [
     "#######################################################################################################################",
 ]
 characters = {
-    "hasnain":"😎",
-    "ammar":"😹",   
-    "shaheer":"🥶"
+    "hasnain":"#",
+    "ammar":"@",   
+    "shaheer":"&"
 }
 selected = "ammar"
 MAP_LAYOUT_G_FLOOR = [
@@ -93,11 +96,12 @@ def center_text_horizontally(newwin, y, text, attr):
 
 
 #actual game functions
-def game(newwin, retries):
+def game(newwin):
     curses.curs_set(0)
     newwin.keypad(True)
     init_color()
     tickrate = 28
+
     #spawn location of player    
     player_y = 5
     player_x = 8
@@ -160,17 +164,23 @@ def game(newwin, retries):
             if MAP_LAYOUT_G_FLOOR[new_y][new_x] not in ("#"):
                 player_y = new_y
                 player_x = new_x
-                if player_x == C109_LOOP[i][1] and player_y == C109_LOOP[i][0]:
-                    if retries < 3:
-                        game(newwin, retries + 1)
-                    else: 
+                #if player and teacher colliod condition checks
+                if player_x == C109_LOOP[i][0] and player_y == C109_LOOP[i][1]:
+                    #if yes gmae over screen display loop
+                    newwin.erase()
+                    for y in range(len(MAP_GAME_OVER)):
+                        row = MAP_GAME_OVER[y]
+                        newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+                    #waiting for the input either Q for quit and R to restart
+                    newwin.timeout(5000000)
+                    key = newwin.getch()
+                    if key in (ord("q"), ord("Q")):
+                        return #return works in both cases: recursive call or single call only
+                    elif key in (ord("r"), ord("R")):
+                        game(newwin)
+                        break #after recursive call gets back it will gonna break the while loop
 
-                        for i in range(len(MAP_GAME_OVER)):
-                            newwin.addch(i + 1, 1, MAP_GAME_OVER[i], curses.color_pair(4) | curses.A_BOLD)
-                        newwin.timeout(5000)
-                        break
-
-        
+        #looping condition for teacher
         i = i + 1
         if i == tickrate:
             i = 0
@@ -273,7 +283,7 @@ def main(stdscr):
         key = newwin.getch()
 
         if key == ord('1'):
-            game(newwin, 0)
+            game(newwin)
         elif key == ord('2'):
             load_character_screen(newwin)
         elif key == ord('3'):
@@ -286,11 +296,6 @@ def main(stdscr):
                         "HIGH SCORE", attr2)
         elif key == ord('5'):
             break
-
-
-
-if os.name == "nt":
-    os.system("mode con: cols=180 lines=55")
 
 
 if __name__ == "__main__":
