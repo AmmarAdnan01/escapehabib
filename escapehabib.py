@@ -20,7 +20,7 @@ MAP_GAME_OVER = [
     "#                       ####    #    #   #    #   ######         ####      ##     ######   #   #                      #",
     "#                                                                                                                     #",
     "#                   --------------------------------------------------------------------------------                  #",
-    "#                                                                                                                     #",
+    "#                                                   Tries Left: [tries_left]                                          #",
     "#                                      YOU WERE CAUGHT BEFORE REACHING THE EXIT!                                      #",
     "#                                                                                                                     #",
     "#                                       [R] RESTART                     [Q] QUIT                                      #",
@@ -101,10 +101,12 @@ def center_text_horizontally(newwin, y, text, attr):
         newwin.addstr(y, x, text, attr)
 
 #actual game functions
-def game(newwin):
+def game(newwin, currentTry):
+    retries_allowed = 3
     curses.curs_set(0)
     newwin.keypad(True)
     init_color()
+    attr_countdown = curses.color_pair(1) | curses.A_BOLD
     tickrate = 28
 
     #spawn location of player    
@@ -112,7 +114,7 @@ def game(newwin):
     player_x = 8
 
     #time interval for limiting teacher movement 
-    interval = 0.2
+    interval = 0.08
     next_print_time = time.monotonic() + interval
 
     #map max_width
@@ -147,7 +149,6 @@ def game(newwin):
 
         #actual spawning player
         newwin.addch(player_y + 1, player_x + 1, characters[selected], curses.color_pair(6) | curses.A_BOLD)
-
         #teachers spawning
         newwin.addch(C109_LOOP[i][1] + 1, C109_LOOP[i][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         try:
@@ -186,11 +187,18 @@ def game(newwin):
                 if player_x == C109_LOOP[i][0] and player_y == C109_LOOP[i][1]:
                     #if yes gmae over screen display loop
                     newwin.erase()
+                    if currentTry == retries_allowed:
+                        return
 
                     #game over map display useing str
                     for y in range(len(MAP_GAME_OVER)):
                         row = MAP_GAME_OVER[y]
-                        newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+                        if y == 15:
+                            row = row.replace("[tries_left]", str(str(retries_allowed-currentTry)+"           "))
+                            newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+                        else:
+                            newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+
 
                     #waiting for the input either Q for quit and R to restart
                     key = newwin.getch()
@@ -201,7 +209,7 @@ def game(newwin):
                     if key in (ord("q"), ord("Q")):
                         return #return works in both cases: recursive call or single call only
                     elif key in (ord("r"), ord("R")):
-                        game(newwin)
+                        game(newwin, currentTry + 1)
                         break #after recursive call gets back it will gonna break the while loop
 
 
@@ -209,7 +217,7 @@ def game(newwin):
         if current_time >= next_print_time:
             #teacher 1
             i = i + 1
-            if i >= tickrate:
+            if i >= len(C109_LOOP):
                 i = 0
 
             #teacher 2
@@ -314,10 +322,11 @@ def main(stdscr):
 
     while True:
         load_home_screen(newwin)
+        newwin.timeout(-1)
         key = newwin.getch()
 
         if key == ord('1'):
-            game(newwin)
+            game(newwin, 1)
         elif key == ord('2'):
             load_character_screen(newwin)
         elif key == ord('3'):
