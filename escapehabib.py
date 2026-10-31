@@ -70,6 +70,11 @@ C109_LOOP = [
     [42, 11], [41, 11], [40, 11],
     [39, 11], [39, 10], [39, 9], [39, 8]
 ]
+
+GATE2_LOOP = [
+    [108, 17], [109, 17], [110, 17], [111, 17], [112, 17], [113, 17], [114, 17], [115, 17], [116, 17], [117, 17],[116, 17], [115, 17], [114, 17], [113, 17], [112, 17], [111, 17], [110, 17], [109, 17], [108, 17]
+]
+
 playercoords = []
 def init_color():
     curses.start_color()
@@ -88,12 +93,12 @@ def init_color():
     curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_BLACK) 
 
+
 def center_text_horizontally(newwin, y, text, attr):
     height, width = newwin.getmaxyx()
     if 0 < y < height - 1 and len(text) < width - 2:
         x = (width - len(text)) // 2
         newwin.addstr(y, x, text, attr)
-
 
 #actual game functions
 def game(newwin):
@@ -106,13 +111,19 @@ def game(newwin):
     player_y = 5
     player_x = 8
 
+    #time interval for limiting teacher movement 
+    interval = 0.2
+    next_print_time = time.monotonic() + interval
+
     #map max_width
     map_width = 0
     for i in MAP_LAYOUT_G_FLOOR:
         if len(i) > map_width:
             map_width = len(i)
     i = 0
+    j = 0
     while True:
+        current_time = time.monotonic()
         newwin.erase()
 
         #current terminal max height and width
@@ -136,10 +147,16 @@ def game(newwin):
 
         #actual spawning player
         newwin.addch(player_y + 1, player_x + 1, characters[selected], curses.color_pair(6) | curses.A_BOLD)
-        newwin.addch(C109_LOOP[i][1] + 1, C109_LOOP[i][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
-        newwin.refresh()
-        newwin.timeout(500)
 
+        #teachers spawning
+        newwin.addch(C109_LOOP[i][1] + 1, C109_LOOP[i][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
+        try:
+            newwin.addch(GATE2_LOOP[j][1] + 1, GATE2_LOOP[j][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
+        except:
+            pass
+        newwin.refresh()
+
+        newwin.timeout(1)
         #waiting here for getting an action key
         key = newwin.getch()
 
@@ -164,26 +181,43 @@ def game(newwin):
             if MAP_LAYOUT_G_FLOOR[new_y][new_x] not in ("#"):
                 player_y = new_y
                 player_x = new_x
+
                 #if player and teacher colliod condition checks
                 if player_x == C109_LOOP[i][0] and player_y == C109_LOOP[i][1]:
                     #if yes gmae over screen display loop
                     newwin.erase()
+
+                    #game over map display useing str
                     for y in range(len(MAP_GAME_OVER)):
                         row = MAP_GAME_OVER[y]
                         newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+
                     #waiting for the input either Q for quit and R to restart
-                    newwin.timeout(5000000)
                     key = newwin.getch()
+                    #if input is some other key it will gonna stay on game over screen until you press q or r
+                    while key not in (ord("q"), ord("Q"), ord("r"), ord("R")):
+                        key = newwin.getch()
+
                     if key in (ord("q"), ord("Q")):
                         return #return works in both cases: recursive call or single call only
                     elif key in (ord("r"), ord("R")):
                         game(newwin)
                         break #after recursive call gets back it will gonna break the while loop
 
+
         #looping condition for teacher
-        i = i + 1
-        if i == tickrate:
-            i = 0
+        if current_time >= next_print_time:
+            #teacher 1
+            i = i + 1
+            if i >= tickrate:
+                i = 0
+
+            #teacher 2
+            j = j + 1
+            if j >= len(GATE2_LOOP):
+                j = 0
+            
+            next_print_time += interval
 
 def load_instruction_screen(newwin):
     attr = curses.color_pair(1) | curses.A_BOLD
