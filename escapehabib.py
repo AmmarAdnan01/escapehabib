@@ -4,6 +4,7 @@ import time
 
 if os.name == "nt":
     os.system("mode con: cols=180 lines=55")
+    
 MAP_GAME_OVER = [
     "#######################################################################################################################",
     "#                                                                                                                     #",
@@ -29,12 +30,32 @@ MAP_GAME_OVER = [
     "#                                                                                                                     #",
     "#######################################################################################################################",
 ]
-characters = {
-    "hasnain":"#",
-    "ammar":"@",   
-    "shaheer":"&"
-}
-selected = "ammar"
+
+MAP_END_SCREEN = [
+    "#######################################################################################################################",
+    "#                                                                                                                     #",
+    "#                                            E S C A P E   H A B I B                                                  #",
+    "#                                                                                                                     #",
+    "#  -----------------------------------------------------------------------------------------------------------------  #",
+    "#                                                                                                                     #",
+    "#                       ##   ##   #######   ##     ##      ##     ##   #######   ##    ##                             #",
+    "#                        ## ##   ##     ##  ##     ##      ##     ##  ##     ##  ###   ##                             #",
+    "#                         ###    ##     ##  ##     ##      ##  #  ##  ##     ##  ####  ##                             #",
+    "#                         ###    ##     ##  ##     ##      ## ### ##  ##     ##  ## ## ##                             #",
+    "#                         ###    ##     ##  ##     ##      ###   ###  ##     ##  ##  ####                             #",
+    "#                         ###     #######    #######       ##     ##   #######   ##   ###                             #",
+    "#                                                                                                                     #",
+    "#  -----------------------------------------------------------------------------------------------------------------  #",
+    "#                                                                                                                     #",
+    "#                                  DEGREE SECURED! YOU ESCAPED CAMPUS ALIVE!                                          #",
+    "#                                                                                                                     #",
+    "#                                               [Q] GRADUATE                                                          #",
+    "#                                                                                                                     #",
+    "#                                        CONGRATULATIONS, GRADUATE HABIB!                                             #",
+    "#                                                                                                                     #",
+    "#######################################################################################################################",
+]
+
 MAP_LAYOUT_G_FLOOR = [
     "#######################################################################################################################",
     "#    [Ecology W121] #   [Dig.Sys &  #                                                                                 #",
@@ -45,8 +66,8 @@ MAP_LAYOUT_G_FLOOR = [
     "#######   ###########   #############               #           #   # |   #  Center]    #   #             #           #",
     "      #                                             #############   # |   ###############   ###############           #",
     "#######   ###########################   #########                   # |                     #  [Student   #   #########",
-    "#   [Faculty C114]  #                   #[C-109]#   #############   # |                     #   Life]     #   #       #",
-    "#                   #   #############   #########   # [Faculty  #   # |   ###############   #             #   # Gate2 #",
+    "#   [Faculty C114]  #                   #[C-109]#   #############   # |                     #   Life]     #   # Gate2 #",
+    "#                   #   #############   #########   # [Faculty  #   # |   ###############   #             #   #       #",
     "#######   ###########   # [Stair 9] #               #    Pod]   #   # |   #             #   ###############   #       #",
     "      #   #             #############               #############   # |   # [Reception] #   #                 #       #",
     "      #####   #######                                               ###   #             #####                 #       #",
@@ -60,6 +81,14 @@ MAP_LAYOUT_G_FLOOR = [
     "  #                                                                                                                   #",
     " ######################################################################################################################",
 ]
+
+characters = {
+    "hasnain":"#",
+    "ammar":"@",   
+    "shaheer":"&"
+}
+selected = "ammar"
+
 C109_LOOP = [
     [39, 7], [40, 7], [41, 7], [42, 7],
     [43, 7], [44, 7], [45, 7], [46, 7],
@@ -102,6 +131,8 @@ CASSIMLAB_LOOP = [
     [27, 21], [27, 20], [27, 19]
 ]
 
+GATE2 = [[9, 112], [9, 113], [9, 114], [9, 115], [9, 116]]
+
 playercoords = []
 def init_color():
     curses.start_color()
@@ -134,14 +165,13 @@ def game(newwin, currentTry):
     newwin.keypad(True)
     init_color()
     attr_countdown = curses.color_pair(1) | curses.A_BOLD
-    tickrate = 28
 
     #spawn location of player    
     player_y = 5
     player_x = 8
 
     #time interval for limiting teacher movement 
-    interval = 0.08
+    interval = 0.10
     next_print_time = time.monotonic() + interval
 
     #map max_width
@@ -180,16 +210,14 @@ def game(newwin, currentTry):
 
         #actual spawning player
         newwin.addch(player_y + 1, player_x + 1, characters[selected], curses.color_pair(6) | curses.A_BOLD)
+
         #teachers spawning
         newwin.addch(C109_LOOP[i][1] + 1, C109_LOOP[i][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
-        try:
-            newwin.addch(GATE2_LOOP[j][1] + 1, GATE2_LOOP[j][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
-        except:
-            pass
-        #spawning new teachers
+        newwin.addch(GATE2_LOOP[j][1] + 1, GATE2_LOOP[j][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         newwin.addch(STAIR9_LOOP[k][1] + 1, STAIR9_LOOP[k][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         newwin.addch(STAIRS_LOOP[l][1] + 1, STAIRS_LOOP[l][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         newwin.addch(CASSIMLAB_LOOP[m][1] + 1, CASSIMLAB_LOOP[m][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
+
         newwin.refresh()
 
         newwin.timeout(1)
@@ -218,9 +246,24 @@ def game(newwin, currentTry):
                 player_y = new_y
                 player_x = new_x
 
+                #player touches gate 2 
+                if (player_x == GATE2[0][1] and player_y == GATE2[0][0]) or (player_x == GATE2[1][1] and player_y == GATE2[1][0]) or (player_x == GATE2[2][1] and player_y == GATE2[2][0]) or (player_x == GATE2[3][1] and player_y == GATE2[3][0]) or (player_x == GATE2[4][1] and player_y == GATE2[4]
+                [0]):
+                    newwin.erase()
+                    for y in range(len(MAP_END_SCREEN)):
+                        row = MAP_END_SCREEN[y]
+                        newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+                    key = newwin.getch()
+                    #if input is some other key it will gonna stay on game over screen until you press q or r
+                    while key not in (ord("q"), ord("Q")):
+                        key = newwin.getch()
+
+                    if key in (ord("q"), ord("Q")):
+                        return #return works in both cases: recursive call or single call only
+            
                 #if player and teacher colliod condition checks
                 #collision check with the new teachers too
-                if (player_x == C109_LOOP[i][0] and player_y == C109_LOOP[i][1]) or (player_x == STAIR9_LOOP[k][0] and player_y == STAIR9_LOOP[k][1]) or (player_x == STAIRS_LOOP[l][0] and player_y == STAIRS_LOOP[l][1]) or (player_x == CASSIMLAB_LOOP[m][0] and player_y == CASSIMLAB_LOOP[m][1]):
+                if (player_x == C109_LOOP[i][0] and player_y == C109_LOOP[i][1]) or (player_x == GATE2_LOOP[j][0] and player_y == GATE2_LOOP[j][1]) or (player_x == STAIR9_LOOP[k][0] and player_y == STAIR9_LOOP[k][1]) or (player_x == STAIRS_LOOP[l][0] and player_y == STAIRS_LOOP[l][1]) or (player_x == CASSIMLAB_LOOP[m][0] and player_y == CASSIMLAB_LOOP[m][1]):
                     #if yes gmae over screen display loop
                     newwin.erase()
                     if currentTry == retries_allowed:
@@ -329,7 +372,7 @@ def load_character_screen(newwin):
 
     while True:
         newwin.clear()
-        height, width = newwin.getmaxyx()
+        height = newwin.getmaxyx()
         if selected == "ammar":
             center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
             center_text_horizontally(newwin, height // 2, "(1. Ammar "+characters["ammar"]+")   2. Hasnain "+characters["hasnain"]+"   3. Shaheer "+characters["shaheer"], attr2)
@@ -352,10 +395,7 @@ def load_character_screen(newwin):
         elif key == ord("3"):
             selected = "shaheer"
         elif key in (curses.KEY_ENTER, 10, 13):
-            return
-
-            
-        
+            return 
         if key == ord("5"):
             selected = originallyselected
             return
@@ -394,3 +434,4 @@ def main(stdscr):
 
 if __name__ == "__main__":
     curses.wrapper(main)
+
