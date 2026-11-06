@@ -75,6 +75,33 @@ GATE2_LOOP = [
     [108, 17], [109, 17], [110, 17], [111, 17], [112, 17], [113, 17], [114, 17], [115, 17], [116, 17], [117, 17],[116, 17], [115, 17], [114, 17], [113, 17], [112, 17], [111, 17], [110, 17], [109, 17], [108, 17]
 ]
 
+STAIR9_LOOP = [
+    [23, 9], [24, 9], [25, 9], [26, 9], [27, 9], [28, 9], [29, 9], [30, 9], [31, 9], [32, 9], [33, 9],
+    [34, 9], [35, 9], [36, 9],
+    [37, 9], [37, 10], [37, 11], [37, 12],
+    [37, 13], [36, 13], [35, 13], [34, 13], [33, 13], [32, 13], [31, 13], [30, 13], [29, 13], [28, 13], [27, 13],
+    [26, 13], [25, 13], [24, 13],
+    [23, 13], [23, 12], [23, 11], [23, 10]
+]
+
+STAIRS_LOOP = [
+    [77, 17], [78, 17], [79, 17], [80, 17], [81, 17], [82, 17], [83, 17], [84, 17], [85, 17], [86, 17], [87, 17],
+    [88, 17], [89, 17], [90, 17],
+    [91, 17], [91, 18], [91, 19], [91, 20],
+    [91, 21], [90, 21], [89, 21], [88, 21], [87, 21], [86, 21], [85, 21], [84, 21], [83, 21], [82, 21], [81, 21],
+    [80, 21], [79, 21], [78, 21],
+    [77, 21], [77, 20], [77, 19], [77, 18]
+]
+
+CASSIMLAB_LOOP = [
+    [27, 18], [28, 18], [29, 18], [30, 18], [31, 18], [32, 18], [33, 18], [34, 18], [35, 18], [36, 18], [37, 18],
+    [38, 18], [39, 18], [40, 18], [41, 18], [42, 18], [43, 18], [44, 18], [45, 18], [46, 18], [47, 18], [48, 18],
+    [49, 18], [49, 19], [49, 20],
+    [49, 21], [48, 21], [47, 21], [46, 21], [45, 21], [44, 21], [43, 21], [42, 21], [41, 21], [40, 21], [39, 21],
+    [38, 21], [37, 21], [36, 21], [35, 21], [34, 21], [33, 21], [32, 21], [31, 21], [30, 21], [29, 21], [28, 21],
+    [27, 21], [27, 20], [27, 19]
+]
+
 playercoords = []
 def init_color():
     curses.start_color()
@@ -124,6 +151,10 @@ def game(newwin, currentTry):
             map_width = len(i)
     i = 0
     j = 0
+    #starting positions for the new teachers
+    k = 0
+    l = 0
+    m = 0
     while True:
         current_time = time.monotonic()
         newwin.erase()
@@ -155,6 +186,10 @@ def game(newwin, currentTry):
             newwin.addch(GATE2_LOOP[j][1] + 1, GATE2_LOOP[j][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         except:
             pass
+        #spawning new teachers
+        newwin.addch(STAIR9_LOOP[k][1] + 1, STAIR9_LOOP[k][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
+        newwin.addch(STAIRS_LOOP[l][1] + 1, STAIRS_LOOP[l][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
+        newwin.addch(CASSIMLAB_LOOP[m][1] + 1, CASSIMLAB_LOOP[m][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         newwin.refresh()
 
         newwin.timeout(1)
@@ -184,7 +219,8 @@ def game(newwin, currentTry):
                 player_x = new_x
 
                 #if player and teacher colliod condition checks
-                if player_x == C109_LOOP[i][0] and player_y == C109_LOOP[i][1]:
+                #collision check with the new teachers too
+                if (player_x == C109_LOOP[i][0] and player_y == C109_LOOP[i][1]) or (player_x == STAIR9_LOOP[k][0] and player_y == STAIR9_LOOP[k][1]) or (player_x == STAIRS_LOOP[l][0] and player_y == STAIRS_LOOP[l][1]) or (player_x == CASSIMLAB_LOOP[m][0] and player_y == CASSIMLAB_LOOP[m][1]):
                     #if yes gmae over screen display loop
                     newwin.erase()
                     if currentTry == retries_allowed:
@@ -224,6 +260,21 @@ def game(newwin, currentTry):
             j = j + 1
             if j >= len(GATE2_LOOP):
                 j = 0
+
+            #teacher 3 
+            k = k + 1
+            if k >= len(STAIR9_LOOP):
+                k = 0
+
+            #teacher 4
+            l = l + 1
+            if l >= len(STAIRS_LOOP):
+                l = 0
+
+            #teacher 5
+            m = m + 1
+            if m >= len(CASSIMLAB_LOOP):
+                m = 0
             
             next_print_time += interval
 
