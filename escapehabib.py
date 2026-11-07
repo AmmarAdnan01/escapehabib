@@ -1,6 +1,7 @@
 import curses
 import os
 import time
+import miniaudio
 
 if os.name == "nt":
     os.system("mode con: cols=180 lines=55")
@@ -47,11 +48,11 @@ MAP_END_SCREEN = [
     "#                                                                                                                     #",
     "#  -----------------------------------------------------------------------------------------------------------------  #",
     "#                                                                                                                     #",
-    "#                                  DEGREE SECURED! YOU ESCAPED CAMPUS ALIVE!                                          #",
+    "#                                    CLASS BUNKED! YOU ESCAPED CAMPUS ALIVE!                                          #",
     "#                                                                                                                     #",
     "#                                               [Q] GRADUATE                                                          #",
     "#                                                                                                                     #",
-    "#                                        CONGRATULATIONS, GRADUATE HABIB!                                             #",
+    "#                                               CONGRATULATIONS!                                                      #",
     "#                                                                                                                     #",
     "#######################################################################################################################",
 ]
@@ -87,7 +88,7 @@ characters = {
     "ammar":"@",   
     "shaheer":"&"
 }
-selected = "ammar"
+selected = "shaheer"
 
 C109_LOOP = [
     [39, 7], [40, 7], [41, 7], [42, 7],
@@ -134,6 +135,22 @@ CASSIMLAB_LOOP = [
 GATE2 = [[9, 112], [9, 113], [9, 114], [9, 115], [9, 116]]
 
 playercoords = []
+current_device = None
+
+def play_sound_effect(filename):
+    global current_device
+    
+    # Optional: Stop previous audio if something is already playing
+    if current_device is not None:
+        current_device.close()
+        
+    try:
+        # Load and fire the audio instantly in a background thread
+        stream = miniaudio.stream_file(filename)
+        current_device = miniaudio.PlaybackDevice()
+        current_device.start(stream)
+    except Exception:
+        pass # Prevents the game from crashing if the audio file is missing
 def init_color():
     curses.start_color()
     curses.use_default_colors()
@@ -232,12 +249,16 @@ def game(newwin, currentTry):
         #player movement logic on pressing arrow keys
         new_y, new_x = player_y, player_x
         if key == curses.KEY_UP:
+            play_sound_effect("sound.MP3")
             new_y -= 1
         elif key == curses.KEY_DOWN:
+            play_sound_effect("sound.MP3")
             new_y += 1
         elif key == curses.KEY_LEFT:
+            play_sound_effect("sound.MP3")
             new_x -= 1
         elif key == curses.KEY_RIGHT:
+            play_sound_effect("sound.MP3")
             new_x += 1
 
         #if not colliding with walls or getting out of map, player coordinates changes with the new ones
@@ -417,6 +438,7 @@ def main(stdscr):
         key = newwin.getch()
 
         if key == ord('1'):
+            play_sound_effect("intro.MP3")
             game(newwin, 1)
         elif key == ord('2'):
             load_character_screen(newwin)
@@ -433,5 +455,7 @@ def main(stdscr):
 
 
 if __name__ == "__main__":
+
+    
     curses.wrapper(main)
 
