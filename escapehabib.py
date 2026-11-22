@@ -1,10 +1,9 @@
 import curses
 import os
 import time
-import miniaudio
 
-if os.name == "nt":
-    os.system("mode con: cols=180 lines=55")
+if os.name == "nt": #check wheather the system/os is windows or not
+    os.system("mode con: cols=180 lines=55") #set the terminal to this size
     
 MAP_GAME_OVER = [
     "#######################################################################################################################",
@@ -48,11 +47,11 @@ MAP_END_SCREEN = [
     "#                                                                                                                     #",
     "#  -----------------------------------------------------------------------------------------------------------------  #",
     "#                                                                                                                     #",
-    "#                                    CLASS BUNKED! YOU ESCAPED CAMPUS ALIVE!                                          #",
+    "#                                  DEGREE SECURED! YOU ESCAPED CAMPUS ALIVE!                                          #",
     "#                                                                                                                     #",
     "#                                               [Q] GRADUATE                                                          #",
     "#                                                                                                                     #",
-    "#                                               CONGRATULATIONS!                                                      #",
+    "#                                        CONGRATULATIONS, GRADUATE HABIB!                                             #",
     "#                                                                                                                     #",
     "#######################################################################################################################",
 ]
@@ -88,7 +87,7 @@ characters = {
     "ammar":"@",   
     "shaheer":"&"
 }
-selected = "shaheer"
+selected = "ammar"
 
 C109_LOOP = [
     [39, 7], [40, 7], [41, 7], [42, 7],
@@ -135,26 +134,10 @@ CASSIMLAB_LOOP = [
 GATE2 = [[9, 112], [9, 113], [9, 114], [9, 115], [9, 116]]
 
 playercoords = []
-current_device = None
-
-def play_sound_effect(filename):
-    global current_device
-    
-    # Optional: Stop previous audio if something is already playing
-    if current_device is not None:
-        current_device.close()
-        
-    try:
-        # Load and fire the audio instantly in a background thread
-        stream = miniaudio.stream_file(filename)
-        current_device = miniaudio.PlaybackDevice()
-        current_device.start(stream)
-    except Exception:
-        pass # Prevents the game from crashing if the audio file is missing
 def init_color():
-    curses.start_color()
-    curses.use_default_colors()
-    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK)
+    curses.start_color() #use before initializing colors
+    curses.use_default_colors() #allow to use default terminal colors
+    curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK) #built in function, takes three parameters pair_number, text color and bg color
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLUE)
     curses.init_pair(3, curses.COLOR_BLUE, curses.COLOR_GREEN)
 
@@ -162,26 +145,23 @@ def init_color():
     wall_color = 174 
     wall_background = 236
     path_color = 108
-    curses.init_pair(4, wall_color, wall_background)
-    curses.init_pair(5, path_color, curses.COLOR_BLACK)
+    curses.init_pair(4, wall_color, wall_background) # hash-color = wall color (orangish)
+    curses.init_pair(5, path_color, curses.COLOR_BLACK) # dots on the path uska color hai ye
     curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK) 
-    curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(8, curses.COLOR_BLACK, curses.COLOR_BLACK) 
 
 
 def center_text_horizontally(newwin, y, text, attr):
-    height, width = newwin.getmaxyx()
-    if 0 < y < height - 1 and len(text) < width - 2:
-        x = (width - len(text)) // 2
+    height, width = newwin.getmaxyx() # getting maximum terminal size which is (newin)
+    if 0 < y < height - 1 and len(text) < width: #safety check if text is out of window - height - 1 for safety of boarders
+        x = (width - len(text)) // 2 #formula for making any text center horizontally
         newwin.addstr(y, x, text, attr)
 
 #actual game functions
 def game(newwin, currentTry):
     retries_allowed = 3
-    curses.curs_set(0)
-    newwin.keypad(True)
-    init_color()
-    attr_countdown = curses.color_pair(1) | curses.A_BOLD
+    curses.curs_set(0) #hides the blinking cursor in the terminal
+    newwin.keypad(True) #allows to press up,down,left and right special keys
+    init_color() 
 
     #spawn location of player    
     player_y = 5
@@ -189,33 +169,34 @@ def game(newwin, currentTry):
 
     #time interval for limiting teacher movement 
     interval = 0.10
-    next_print_time = time.monotonic() + interval
+    last_teacher_move = time.monotonic()
 
     #map max_width
     map_width = 0
     for i in MAP_LAYOUT_G_FLOOR:
         if len(i) > map_width:
             map_width = len(i)
+
+
+    #starting positions for the teachers
     i = 0
     j = 0
-    #starting positions for the new teachers
     k = 0
     l = 0
     m = 0
+
     while True:
         current_time = time.monotonic()
-        newwin.erase()
+        newwin.erase() #remove all the prev loop rendering from memory and re-render next time only what changes
 
-        #current terminal max height and width
-        rows, cols = newwin.getmaxyx()
-
+        #start rendering map again for the new loop
         #map rendering logics
         for y in range(len(MAP_LAYOUT_G_FLOOR)):
             row = MAP_LAYOUT_G_FLOOR[y]
             for x in range(len(row)):
                 char = row[x]
                 if char == "#":
-                    newwin.addch(y + 1, x + 1, "#", curses.color_pair(4) | curses.A_BOLD)
+                    newwin.addch(y + 1, x + 1, "#", curses.color_pair(4) | curses.A_BOLD) # | bitwise helps to give two styles to a charater, else curses me aek hi de sakte ho
                 elif char == " " and x % 2 == 0:
                     newwin.addch(y + 1, x + 1, ".", curses.color_pair(5))
                 elif char == " " and x % 2 != 0:
@@ -223,7 +204,7 @@ def game(newwin, currentTry):
                 elif char == "|":
                     newwin.addch(y + 1, x + 1, char, curses.color_pair(5) | curses.A_BOLD)
                 else:
-                    newwin.addch(y + 1, x + 1, char, curses.color_pair(7))
+                    newwin.addch(y + 1, x + 1, char, curses.color_pair(6))
 
         #actual spawning player
         newwin.addch(player_y + 1, player_x + 1, characters[selected], curses.color_pair(6) | curses.A_BOLD)
@@ -235,7 +216,7 @@ def game(newwin, currentTry):
         newwin.addch(STAIRS_LOOP[l][1] + 1, STAIRS_LOOP[l][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
         newwin.addch(CASSIMLAB_LOOP[m][1] + 1, CASSIMLAB_LOOP[m][0] + 1, "C", curses.color_pair(6) | curses.A_BOLD)
 
-        newwin.refresh()
+        newwin.refresh() #curses sab dimag me karta hai so to show all those changes we use refreash
 
         newwin.timeout(1)
         #waiting here for getting an action key
@@ -249,21 +230,17 @@ def game(newwin, currentTry):
         #player movement logic on pressing arrow keys
         new_y, new_x = player_y, player_x
         if key == curses.KEY_UP:
-            play_sound_effect("sound.MP3")
             new_y -= 1
         elif key == curses.KEY_DOWN:
-            play_sound_effect("sound.MP3")
             new_y += 1
         elif key == curses.KEY_LEFT:
-            play_sound_effect("sound.MP3")
             new_x -= 1
         elif key == curses.KEY_RIGHT:
-            play_sound_effect("sound.MP3")
             new_x += 1
 
         #if not colliding with walls or getting out of map, player coordinates changes with the new ones
-        if 0 <= new_y < len(MAP_LAYOUT_G_FLOOR) and 0 <= new_x < len(MAP_LAYOUT_G_FLOOR[new_y]):
-            if MAP_LAYOUT_G_FLOOR[new_y][new_x] not in ("#"):
+        if 0 <= new_y < len(MAP_LAYOUT_G_FLOOR) and 0 <= new_x < len(MAP_LAYOUT_G_FLOOR[new_y]): #checking if the charater is in the map or not
+            if MAP_LAYOUT_G_FLOOR[new_y][new_x] not in ("#"): #in the map and now check of #
                 player_y = new_y
                 player_x = new_x
 
@@ -274,6 +251,8 @@ def game(newwin, currentTry):
                     for y in range(len(MAP_END_SCREEN)):
                         row = MAP_END_SCREEN[y]
                         newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+    
+                    newwin.refresh()
                     key = newwin.getch()
                     #if input is some other key it will gonna stay on game over screen until you press q or r
                     while key not in (ord("q"), ord("Q")):
@@ -299,7 +278,7 @@ def game(newwin, currentTry):
                         else:
                             newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
 
-
+                    newwin.refresh()
                     #waiting for the input either Q for quit and R to restart
                     key = newwin.getch()
                     #if input is some other key it will gonna stay on game over screen until you press q or r
@@ -314,7 +293,7 @@ def game(newwin, currentTry):
 
 
         #looping condition for teacher
-        if current_time >= next_print_time:
+        if current_time - last_teacher_move >= interval:
             #teacher 1
             i = i + 1
             if i >= len(C109_LOOP):
@@ -340,7 +319,7 @@ def game(newwin, currentTry):
             if m >= len(CASSIMLAB_LOOP):
                 m = 0
             
-            next_print_time += interval
+            last_teacher_move = current_time
 
 def load_instruction_screen(newwin):
     attr = curses.color_pair(1) | curses.A_BOLD
@@ -370,8 +349,8 @@ def load_home_screen(newwin):
 
     height, width = newwin.getmaxyx()
 
-    newwin.border()
-    newwin.keypad(True)
+    newwin.border() #gives border the code
+    newwin.keypad(True) #start acceptiong special keys like arrow up, down etc
 
     center_text_horizontally(newwin, height // 5, 'ESCAPE HABIB: BUNK', attr)
     center_text_horizontally(newwin, height // 5 + 1, 'A CLASS', attr)
@@ -415,7 +394,7 @@ def load_character_screen(newwin):
             newwin.refresh()
         elif key == ord("3"):
             selected = "shaheer"
-        elif key in (curses.KEY_ENTER, 10, 13):
+        elif key in (curses.KEY_ENTER, 10, 13): #10 and13 are ascii code for enter different for mac and windows
             return 
         if key == ord("5"):
             selected = originallyselected
@@ -424,21 +403,19 @@ def load_character_screen(newwin):
     
 
 def main(stdscr):
-    curses.curs_set(0)
-    init_color()
-    stdscr.clear()
-    stdscr.keypad(True)
-    newwin = stdscr
+    curses.curs_set(0) #removing blinking curosr
+    init_color() #initialize color 
+    stdscr.clear() #clear screen
+    stdscr.keypad(True) #allow special characters
+    newwin = stdscr #changing varaible for screen
 
     attr2 = curses.color_pair(2) | curses.A_BOLD
 
     while True:
         load_home_screen(newwin)
-        newwin.timeout(-1)
         key = newwin.getch()
 
         if key == ord('1'):
-            play_sound_effect("intro.MP3")
             game(newwin, 1)
         elif key == ord('2'):
             load_character_screen(newwin)
@@ -454,8 +431,6 @@ def main(stdscr):
             break
 
 
-if __name__ == "__main__":
-
-    
-    curses.wrapper(main)
+if __name__ == "__main__": #checks wheather the file is running directly or getting improted to some other file
+    curses.wrapper(main) #wrapper function takes main as argument and then usko khud apne function ke andr se call karta with a screen which is ready to get keyboard inputs
 
