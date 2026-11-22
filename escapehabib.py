@@ -133,8 +133,6 @@ CASSIMLAB_LOOP = [
 
 GATE2 = [[9, 112], [9, 113], [9, 114], [9, 115], [9, 116]]
 
-
-
 def init_color():
     curses.start_color() #use before initializing colors
     curses.use_default_colors() #allow to use default terminal colors
@@ -244,7 +242,7 @@ def game(newwin, currentTry):
 
                 #player touches gate 2 
                 if check_win(newwin, player_x, player_y, start_time):
-                    high_score.append(start_time-time.monotonic())
+                    high_score.append(time.monotonic()-start_time)
 
                     key = newwin.getch()
                     #if input is some other key it will gonna stay on game over screen until you press q or r
@@ -304,6 +302,28 @@ def check_win(newwin, player_x, player_y, start_time):
         newwin.refresh()
         return True
     return False
+
+def get_name(newwin):
+    newwin.clear()
+    height, width = newwin.getmaxyx()
+    attr2 = curses.color_pair(2) | curses.A_BOLD
+    center_text_horizontally(newwin, height // 2, "ENTER YOUR NAME: ", attr2)
+
+    key = 0
+    name = ""
+    
+    while True:
+        key = newwin.getch()
+        if key in (curses.KEY_ENTER, 10, 13):
+            break
+        if len(name) > 0 and key in (curses.KEY_BACKSPACE, 127, 8):
+            name = name[:-1]
+        if key not in (curses.KEY_ENTER, 10, 13, curses.KEY_BACKSPACE, 127, 8):
+            name += str(chr(key))
+        newwin.clear()
+        center_text_horizontally(newwin, height // 2,"ENTER YOUR NAME: " + name, attr2)
+        newwin.refresh()
+    return name
 
 def load_instruction_screen(newwin):
     attr = curses.color_pair(1) | curses.A_BOLD
@@ -397,7 +417,7 @@ def load_high_score(newwin, name, time):
     time.sort()
     center_text_horizontally(newwin, first_line, "HIGH SCORE", attr2)
     for i in range(len(time)):
-        center_text_horizontally(newwin, first_line + i + 2, str(i+1) + ") " + name + " " + str(int(time[i])) + " sec", attr2)
+        center_text_horizontally(newwin, first_line + i + 2, str(i+1) + ") " + name + " - " + str(int(time[i])) + " sec", attr2)
     if len(time) == 0:
         center_text_horizontally(newwin, first_line + 2, "No high score avaliable", attr2)
 
@@ -409,28 +429,6 @@ def load_high_score(newwin, name, time):
     while key !=  ord('5'):
         key = newwin.getch()
     return 
-
-def get_name(newwin):
-    newwin.clear()
-    height, width = newwin.getmaxyx()
-    attr2 = curses.color_pair(2) | curses.A_BOLD
-    center_text_horizontally(newwin, height // 2, "ENTER YOUR NAME: ", attr2)
-
-    key = 0
-    name = ""
-    
-    while True:
-        key = newwin.getch()
-        if key in (curses.KEY_ENTER, 10, 13):
-            break
-        if len(name) > 0 and key in (curses.KEY_BACKSPACE, 127, 8):
-            name = name[:-1]
-        if key not in (curses.KEY_ENTER, 10, 13, curses.KEY_BACKSPACE, 127, 8):
-            name += str(chr(key))
-        newwin.clear()
-        center_text_horizontally(newwin, height // 2,"ENTER YOUR NAME: " + name, attr2)
-        newwin.refresh()
-    return name
 
 def main(stdscr):
     curses.curs_set(0) #removing blinking curosr
@@ -459,7 +457,6 @@ def main(stdscr):
             load_high_score(newwin, name, time)
         elif key == ord('5'):
             break
-
 
 if __name__ == "__main__": #checks wheather the file is running directly or getting improted to some other file
     curses.wrapper(main) #wrapper function takes main as argument and then usko khud apne function ke andr se call karta with a screen which is ready to get keyboard inputs
