@@ -133,7 +133,8 @@ CASSIMLAB_LOOP = [
 
 GATE2 = [[9, 112], [9, 113], [9, 114], [9, 115], [9, 116]]
 
-playercoords = []
+
+
 def init_color():
     curses.start_color() #use before initializing colors
     curses.use_default_colors() #allow to use default terminal colors
@@ -149,7 +150,6 @@ def init_color():
     curses.init_pair(5, path_color, curses.COLOR_BLACK) # dots on the path uska color hai ye
     curses.init_pair(6, curses.COLOR_WHITE, curses.COLOR_BLACK) 
 
-
 def center_text_horizontally(newwin, y, text, attr):
     height, width = newwin.getmaxyx() # getting maximum terminal size which is (newin)
     if 0 < y < height - 1 and len(text) < width: #safety check if text is out of window - height - 1 for safety of boarders
@@ -161,7 +161,9 @@ def game(newwin, currentTry):
     retries_allowed = 3
     curses.curs_set(0) #hides the blinking cursor in the terminal
     newwin.keypad(True) #allows to press up,down,left and right special keys
-    init_color() 
+    init_color()
+
+    start_time = time.monotonic()
 
     #spawn location of player    
     player_y = 5
@@ -172,12 +174,8 @@ def game(newwin, currentTry):
     last_teacher_move = time.monotonic()
 
     #map max_width
-    map_width = 0
-    for i in MAP_LAYOUT_G_FLOOR:
-        if len(i) > map_width:
-            map_width = len(i)
-
-
+    map_width = MAP_LAYOUT_G_FLOOR[0]
+    high_score = []
     #starting positions for the teachers
     i = 0
     j = 0
@@ -225,7 +223,7 @@ def game(newwin, currentTry):
     
         #breaking if press q or Q
         if key in (ord("q"), ord("Q")):
-            break
+            return []
 
         #player movement logic on pressing arrow keys
         new_y, new_x = player_y, player_x
@@ -245,21 +243,15 @@ def game(newwin, currentTry):
                 player_x = new_x
 
                 #player touches gate 2 
-                if (player_x == GATE2[0][1] and player_y == GATE2[0][0]) or (player_x == GATE2[1][1] and player_y == GATE2[1][0]) or (player_x == GATE2[2][1] and player_y == GATE2[2][0]) or (player_x == GATE2[3][1] and player_y == GATE2[3][0]) or (player_x == GATE2[4][1] and player_y == GATE2[4]
-                [0]):
-                    newwin.erase()
-                    for y in range(len(MAP_END_SCREEN)):
-                        row = MAP_END_SCREEN[y]
-                        newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
-    
-                    newwin.refresh()
+                if check_win(newwin, player_x, player_y, start_time):
+                    high_score.append(start_time-time.monotonic())
+
                     key = newwin.getch()
                     #if input is some other key it will gonna stay on game over screen until you press q or r
                     while key not in (ord("q"), ord("Q")):
                         key = newwin.getch()
-
                     if key in (ord("q"), ord("Q")):
-                        return #return works in both cases: recursive call or single call only
+                        return high_score #return works in both cases: recursive call or single call only
             
                 #if player and teacher colliod condition checks
                 #collision check with the new teachers too
@@ -267,7 +259,7 @@ def game(newwin, currentTry):
                     #if yes gmae over screen display loop
                     newwin.erase()
                     if currentTry == retries_allowed:
-                        return
+                        return []
 
                     #game over map display useing str
                     for y in range(len(MAP_GAME_OVER)):
@@ -286,40 +278,32 @@ def game(newwin, currentTry):
                         key = newwin.getch()
 
                     if key in (ord("q"), ord("Q")):
-                        return #return works in both cases: recursive call or single call only
+                        return [] #return works in both cases: recursive call or single call only
                     elif key in (ord("r"), ord("R")):
-                        game(newwin, currentTry + 1)
-                        break #after recursive call gets back it will gonna break the while loop
+                        return game(newwin, currentTry + 1)
+                        #after recursive call gets back it will gonna break the while loop
 
 
         #looping condition for teacher
         if current_time - last_teacher_move >= interval:
-            #teacher 1
-            i = i + 1
-            if i >= len(C109_LOOP):
-                i = 0
 
-            #teacher 2
-            j = j + 1
-            if j >= len(GATE2_LOOP):
-                j = 0
+            i = (i + 1) % len(C109_LOOP)
+            j = (j + 1) % len(GATE2_LOOP)
+            k = (k + 1) % len(STAIR9_LOOP)
+            l = (l + 1) % len(STAIRS_LOOP)
+            m = (m + 1) % len(CASSIMLAB_LOOP)
 
-            #teacher 3 
-            k = k + 1
-            if k >= len(STAIR9_LOOP):
-                k = 0
-
-            #teacher 4
-            l = l + 1
-            if l >= len(STAIRS_LOOP):
-                l = 0
-
-            #teacher 5
-            m = m + 1
-            if m >= len(CASSIMLAB_LOOP):
-                m = 0
-            
             last_teacher_move = current_time
+
+def check_win(newwin, player_x, player_y, start_time):
+    if (player_x == GATE2[0][1] and player_y == GATE2[0][0]) or (player_x == GATE2[1][1] and player_y == GATE2[1][0]) or (player_x == GATE2[2][1] and player_y == GATE2[2][0]) or (player_x == GATE2[3][1] and player_y == GATE2[3][0]) or (player_x == GATE2[4][1] and player_y == GATE2[4][0]):      
+        newwin.erase()
+        for y in range(len(MAP_END_SCREEN)):
+            row = MAP_END_SCREEN[y]
+            newwin.addstr(y + 1, 1, row, curses.color_pair(4) | curses.A_BOLD)
+        newwin.refresh()
+        return True
+    return False
 
 def load_instruction_screen(newwin):
     attr = curses.color_pair(1) | curses.A_BOLD
@@ -364,7 +348,7 @@ def load_home_screen(newwin):
     center_text_horizontally(newwin, height - 4, 'POWERED BY TMZ (The Mighty Zingers)', attr3)
 
     newwin.refresh()
-
+    
 def load_character_screen(newwin):
     global selected
     originallyselected = selected
@@ -372,7 +356,7 @@ def load_character_screen(newwin):
 
     while True:
         newwin.clear()
-        height = newwin.getmaxyx()
+        height, width = newwin.getmaxyx()
         if selected == "ammar":
             center_text_horizontally(newwin, height // 3, "SELECT CHARACTER", attr2)
             center_text_horizontally(newwin, height // 2, "(1. Ammar "+characters["ammar"]+")   2. Hasnain "+characters["hasnain"]+"   3. Shaheer "+characters["shaheer"], attr2)
@@ -400,7 +384,53 @@ def load_character_screen(newwin):
             selected = originallyselected
             return
     
+def load_high_score(newwin, name, time):
+    newwin.clear()
+
+    attr2 = curses.color_pair(2) | curses.A_BOLD
+    height, width = newwin.getmaxyx()
+    # Keep the heading and score lines together as a centered block.
+    score_lines = max(len(time), 1)
+    first_line = (height - (score_lines + 1)) // 2
+    newwin.border()
+
+    time.sort()
+    center_text_horizontally(newwin, first_line, "HIGH SCORE", attr2)
+    for i in range(len(time)):
+        center_text_horizontally(newwin, first_line + i + 2, str(i+1) + ") " + name + " " + str(int(time[i])) + " sec", attr2)
+    if len(time) == 0:
+        center_text_horizontally(newwin, first_line + 2, "No high score avaliable", attr2)
+
+    # Keep the return instruction centered near the bottom of the screen.
+    center_text_horizontally(newwin, height - 2, "Press 5 to go back to home screen.", attr2)
+
+    newwin.refresh()
+    key = newwin.getch()
+    while key !=  ord('5'):
+        key = newwin.getch()
+    return 
+
+def get_name(newwin):
+    newwin.clear()
+    height, width = newwin.getmaxyx()
+    attr2 = curses.color_pair(2) | curses.A_BOLD
+    center_text_horizontally(newwin, height // 2, "ENTER YOUR NAME: ", attr2)
+
+    key = 0
+    name = ""
     
+    while True:
+        key = newwin.getch()
+        if key in (curses.KEY_ENTER, 10, 13):
+            break
+        if len(name) > 0 and key in (curses.KEY_BACKSPACE, 127, 8):
+            name = name[:-1]
+        if key not in (curses.KEY_ENTER, 10, 13, curses.KEY_BACKSPACE, 127, 8):
+            name += str(chr(key))
+        newwin.clear()
+        center_text_horizontally(newwin, height // 2,"ENTER YOUR NAME: " + name, attr2)
+        newwin.refresh()
+    return name
 
 def main(stdscr):
     curses.curs_set(0) #removing blinking curosr
@@ -409,24 +439,24 @@ def main(stdscr):
     stdscr.keypad(True) #allow special characters
     newwin = stdscr #changing varaible for screen
 
+    name = ""
+    time = []
+
     attr2 = curses.color_pair(2) | curses.A_BOLD
 
     while True:
         load_home_screen(newwin)
         key = newwin.getch()
-
         if key == ord('1'):
-            game(newwin, 1)
+            if name == "":
+                name = get_name(newwin)
+            time += game(newwin, 1)
         elif key == ord('2'):
             load_character_screen(newwin)
         elif key == ord('3'):
             load_instruction_screen(newwin)
         elif key == ord('4'):
-            newwin.clear()
-            height, width = newwin.getmaxyx()
-            newwin.border()
-            center_text_horizontally(newwin, height // 2,
-                        "HIGH SCORE", attr2)
+            load_high_score(newwin, name, time)
         elif key == ord('5'):
             break
 
